@@ -1,4 +1,3 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart' as cal;
 
@@ -35,7 +34,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final List<String> loremIpsums =
-      List<String>.generate(30, (i) => 'LOREM IPSUM $i');
+  List<String>.generate(30, (i) => 'LOREM IPSUM $i');
 
   @override
   Widget build(BuildContext context) {
@@ -44,29 +43,20 @@ class _MyHomePageState extends State<MyHomePage> {
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
         title: Text(widget.title),
       ),
-      body: GridView.count(
-        crossAxisCount: 2,
+      body: Column(
         children: [
           ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 480, maxHeight: 240),
               child: const TableBasicsExample()),
-          Container(
-              color: Theme.of(context).colorScheme.inversePrimary,
-              child: ListView.builder(
-                  itemCount: loremIpsums.length,
-                  prototypeItem: ListTile(title: Text(loremIpsums.first)),
-                  itemBuilder: (context, index) {
-                    return ListTile(title: Text(loremIpsums[index]));
-                  })),
-          const Text('IPSUM123'),
+          Column(children: _children()),
         ],
       ),
     );
   }
 
   List<Widget> _children() => List<Widget>.generate(loremIpsums.length, (i) {
-        return Text(loremIpsums[i].toString());
-      });
+    return Text(loremIpsums[i].toString());
+  });
 }
 
 class TableBasicsExample extends StatefulWidget {
@@ -85,7 +75,7 @@ class _TableBasicsExampleState extends State<TableBasicsExample> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('TableCalendar'),
+        title: const Text('TableCalendar - Basics'),
       ),
       body: cal.TableCalendar(
         firstDay: calutil.kFirstDay,
