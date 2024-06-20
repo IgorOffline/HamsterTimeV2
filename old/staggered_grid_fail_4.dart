@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart'
-    as grid;
+as grid;
 import 'package:table_calendar/table_calendar.dart' as cal;
 
 import 'utils.dart' as calutil;
@@ -38,7 +38,7 @@ class _MyHomePageState extends State<MyHomePage> {
   int _counter = 0;
 
   final List<String> _loremIpsums =
-      List<String>.generate(30, (i) => '$i. LOREM IPSUM');
+  List<String>.generate(30, (i) => 'LOREM IPSUM $i');
 
   void _incrementCounter() {
     setState(() {
@@ -49,46 +49,52 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: Text(widget.title),
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(widget.title),
+      ),
+      body: grid.StaggeredGrid.count(crossAxisCount: 12, children: [
+        const grid.StaggeredGridTile.count(
+          crossAxisCellCount: 6,
+          mainAxisCellCount: 9,
+          child: TableBasicsExample(),
         ),
-        body: Column(children: [
-          Row(children: [
-            ConstrainedBox(
-                constraints:
-                    const BoxConstraints(maxWidth: 300, maxHeight: 500),
-                child: const TableBasicsExample()),
-            ConstrainedBox(
-                constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width - 320,
-                    maxHeight: 400),
-                child: Container(
-                    color: Theme.of(context).colorScheme.inversePrimary,
-                    child: ListView.builder(
-                        itemCount: _loremIpsums.length,
-                        prototypeItem:
-                            ListTile(title: Text(_loremIpsums.first)),
-                        itemBuilder: (context, index) {
-                          return ListTile(title: Text(_loremIpsums[index]));
-                        }))),
-          ]),
-          ConstrainedBox(
-              constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width,
-                  maxHeight: MediaQuery.of(context).size.height - 500),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  const Text('LOREM IPSUM 123'),
-                  FloatingActionButton(
-                    onPressed: _incrementCounter,
-                    tooltip: 'Increment',
-                    child: Text('$_counter'),
-                  ),
-                ],
-              ))
-        ]));
+        grid.StaggeredGridTile.count(
+          crossAxisCellCount: 6,
+          mainAxisCellCount: 9,
+          child: Container(
+              color: Theme.of(context).colorScheme.inversePrimary,
+              child: ListView.builder(
+                  itemCount: _loremIpsums.length,
+                  prototypeItem: ListTile(title: Text(_loremIpsums.first)),
+                  itemBuilder: (context, index) {
+                    return ListTile(title: Text(_loremIpsums[index]));
+                  })),
+        ),
+        grid.StaggeredGridTile.count(
+            crossAxisCellCount: 6,
+            mainAxisCellCount: 3,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 100, maxWidth: 100),
+              child: FloatingActionButton(
+                onPressed: _incrementCounter,
+                tooltip: 'Increment',
+                child: Text('3 $_counter'),
+              ),
+            )),
+        grid.StaggeredGridTile.count(
+            crossAxisCellCount: 6,
+            mainAxisCellCount: 3,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 100, maxWidth: 100),
+              child: FloatingActionButton(
+                onPressed: _incrementCounter,
+                tooltip: 'Increment',
+                child: Text('4 $_counter'),
+              ),
+            )),
+      ]),
+    );
   }
 }
 

@@ -1,6 +1,5 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart'
-    as grid;
 import 'package:table_calendar/table_calendar.dart' as cal;
 
 import 'utils.dart' as calutil;
@@ -35,61 +34,40 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  final List<String> _loremIpsums =
-      List<String>.generate(30, (i) => '$i. LOREM IPSUM');
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
+  final List<String> loremIpsums =
+  List<String>.generate(30, (i) => 'LOREM IPSUM $i');
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: Text(widget.title),
-        ),
-        body: Column(children: [
-          Row(children: [
-            ConstrainedBox(
-                constraints:
-                    const BoxConstraints(maxWidth: 300, maxHeight: 500),
-                child: const TableBasicsExample()),
-            ConstrainedBox(
-                constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width - 320,
-                    maxHeight: 400),
-                child: Container(
-                    color: Theme.of(context).colorScheme.inversePrimary,
-                    child: ListView.builder(
-                        itemCount: _loremIpsums.length,
-                        prototypeItem:
-                            ListTile(title: Text(_loremIpsums.first)),
-                        itemBuilder: (context, index) {
-                          return ListTile(title: Text(_loremIpsums[index]));
-                        }))),
-          ]),
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: Text(widget.title),
+      ),
+      body: GridView.count(
+        crossAxisCount: 2,
+        children: [
+          const Text('IPSUM123'),
+          Container(),
           ConstrainedBox(
-              constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width,
-                  maxHeight: MediaQuery.of(context).size.height - 500),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  const Text('LOREM IPSUM 123'),
-                  FloatingActionButton(
-                    onPressed: _incrementCounter,
-                    tooltip: 'Increment',
-                    child: Text('$_counter'),
-                  ),
-                ],
-              ))
-        ]));
+              constraints: const BoxConstraints(maxWidth: 480, maxHeight: 240),
+              child: const TableBasicsExample()),
+          Container(
+              color: Theme.of(context).colorScheme.inversePrimary,
+              child: ListView.builder(
+                  itemCount: loremIpsums.length,
+                  prototypeItem: ListTile(title: Text(loremIpsums.first)),
+                  itemBuilder: (context, index) {
+                    return ListTile(title: Text(loremIpsums[index]));
+                  })),
+        ],
+      ),
+    );
   }
+
+  List<Widget> _children() => List<Widget>.generate(loremIpsums.length, (i) {
+    return Text(loremIpsums[i].toString());
+  });
 }
 
 class TableBasicsExample extends StatefulWidget {
