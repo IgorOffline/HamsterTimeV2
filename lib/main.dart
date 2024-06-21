@@ -1,12 +1,78 @@
+import 'dart:collection';
 import 'package:flutter/material.dart';
-import 'package:flutter_staggered_grid_view/flutter_staggered_grid_view.dart'
-    as grid;
+import 'package:provider/provider.dart' as provider;
 import 'package:table_calendar/table_calendar.dart' as cal;
-
-import 'utils.dart' as calutil;
+import 'package:intl/intl.dart' as intl;
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    provider.ChangeNotifierProvider(
+      create: (context) => Globalz(),
+      child: const MyApp(),
+    ),
+  );
+}
+
+class Globalz with ChangeNotifier {
+  int value = 0;
+
+  CalUtils calUtils = CalUtils();
+
+  void increment() {
+    value += 1;
+    notifyListeners();
+  }
+
+  void setCalendarFormat(cal.CalendarFormat calendarFormat) {
+    calUtils.calendarFormat = calendarFormat;
+    notifyListeners();
+  }
+
+  void setFocusedDay(DateTime focusedDay) {
+    calUtils.focusedDay = focusedDay;
+    notifyListeners();
+  }
+
+  void setSelectedDay(DateTime selectedDay) {
+    calUtils.selectedDay = selectedDay;
+    notifyListeners();
+  }
+}
+
+class Timelog {
+  int? id;
+  int? category;
+  int? subcategory;
+  DateTime? time;
+  String? note;
+  DateTime? ctime;
+  DateTime? mtime;
+
+  @override
+  String toString() => 'Timelog= [id= $id, note= $note]';
+}
+
+class CalUtils {
+  CalUtils() {
+    firstDay = DateTime(today.year, today.month - 12, today.day);
+    lastDay = DateTime(today.year, today.month + 12, today.day);
+  }
+
+  cal.CalendarFormat calendarFormat = cal.CalendarFormat.month;
+  DateTime focusedDay = DateTime.now();
+  DateTime? selectedDay;
+
+  final today = DateTime.now();
+  DateTime? firstDay;
+  DateTime? lastDay;
+}
+
+String _formatDateTime(DateTime dt) {
+  return intl.DateFormat('yyyy-MM-dd').format(dt);
+}
+
+int _getDateTimeHashCode(DateTime key) {
+  return key.day * 1000000 + key.month * 10000 + key.year;
 }
 
 class MyApp extends StatelessWidget {
@@ -17,141 +83,133 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
-      home: const MyHomePage(title: 'Hamster Time V2'),
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+          useMaterial3: true,
+          scrollbarTheme: ScrollbarThemeData(
+              thumbVisibility: WidgetStateProperty.all<bool>(true))),
+      home: const MyHomePage(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
-
-  @override
-  State<MyHomePage> createState() => _MyHomePageState();
-}
-
-class _MyHomePageState extends State<MyHomePage> {
-  int _counter = 0;
-
-  final List<String> _loremIpsums =
-      List<String>.generate(30, (i) => '$i. LOREM IPSUM');
-
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        appBar: AppBar(
-          backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-          title: Text(widget.title),
-        ),
-        body: Column(children: [
-          Row(children: [
-            ConstrainedBox(
-                constraints:
-                    const BoxConstraints(maxWidth: 300, maxHeight: 500),
-                child: const TableBasicsExample()),
-            ConstrainedBox(
-                constraints: BoxConstraints(
-                    maxWidth: MediaQuery.of(context).size.width - 320,
-                    maxHeight: 400),
-                child: Container(
-                    color: Theme.of(context).colorScheme.inversePrimary,
-                    child: ListView.builder(
-                        itemCount: _loremIpsums.length,
-                        prototypeItem:
-                            ListTile(title: Text(_loremIpsums.first)),
-                        itemBuilder: (context, index) {
-                          return ListTile(title: Text(_loremIpsums[index]));
-                        }))),
-          ]),
-          ConstrainedBox(
-              constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width,
-                  maxHeight: MediaQuery.of(context).size.height - 500),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  const Text('LOREM IPSUM 123'),
-                  FloatingActionButton(
-                    onPressed: _incrementCounter,
-                    tooltip: 'Increment',
-                    child: Text('$_counter'),
-                  ),
-                ],
-              ))
-        ]));
-  }
-}
-
-class TableBasicsExample extends StatefulWidget {
-  const TableBasicsExample({super.key});
-
-  @override
-  _TableBasicsExampleState createState() => _TableBasicsExampleState();
-}
-
-class _TableBasicsExampleState extends State<TableBasicsExample> {
-  cal.CalendarFormat _calendarFormat = cal.CalendarFormat.month;
-  DateTime _focusedDay = DateTime.now();
-  DateTime? _selectedDay;
+class MyHomePage extends StatelessWidget {
+  const MyHomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('TableCalendar'),
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text('Flutter Demo Home Page'),
       ),
-      body: cal.TableCalendar(
-        firstDay: calutil.kFirstDay,
-        lastDay: calutil.kLastDay,
-        focusedDay: _focusedDay,
-        calendarFormat: _calendarFormat,
-        selectedDayPredicate: (day) {
-          // Use `selectedDayPredicate` to determine which day is currently selected.
-          // If this returns true, then `day` will be marked as selected.
+      body: Column(
+        children: [
+          ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 300, maxHeight: 500),
+              child: const TableBasicsExample()),
+          ConstrainedBox(
+            constraints: BoxConstraints(
+                maxWidth: MediaQuery.of(context).size.width - 320,
+                maxHeight: 400),
+            child: Container(
+                color: Theme.of(context).colorScheme.inversePrimary,
+                child: TextButton(
+                    onPressed: () async {
+                      Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const SecondRoute()));
+                    },
+                    child: provider.Consumer<Globalz>(
+                      builder: (context, global, child) => Text(
+                        'SecondRoute (${global.value})',
+                      ),
+                    ))),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          var global = context.read<Globalz>();
+          global.increment();
+        },
+        tooltip: 'Increment',
+        child: const Icon(Icons.add),
+      ),
+    );
+  }
+}
 
-          // Using `isSameDay` is recommended to disregard
-          // the time-part of compared DateTime objects.
-          return cal.isSameDay(_selectedDay, day);
+class TableBasicsExample extends StatelessWidget {
+  const TableBasicsExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+        appBar: AppBar(
+          title: const Text('TableCalendar'),
+        ),
+        body: provider.Consumer<Globalz>(
+          builder: (context, global, child) => cal.TableCalendar(
+            firstDay: global.calUtils.firstDay!,
+            lastDay: global.calUtils.lastDay!,
+            focusedDay: global.calUtils.focusedDay,
+            calendarFormat: global.calUtils.calendarFormat,
+            selectedDayPredicate: (day) {
+              return cal.isSameDay(global.calUtils.selectedDay, day);
+            },
+            onDaySelected: (selectedDay, focusedDay) {
+              if (!cal.isSameDay(global.calUtils.selectedDay, selectedDay)) {
+                var global = context.read<Globalz>();
+                global.setSelectedDay(selectedDay);
+                global.setFocusedDay(focusedDay);
+              }
+            },
+            onFormatChanged: (format) {
+              if (global.calUtils.calendarFormat != format) {
+                var global = context.read<Globalz>();
+                global.setCalendarFormat(format);
+              }
+            },
+            onPageChanged: (focusedDay) {
+              global.calUtils.focusedDay = focusedDay;
+            },
+          ),
+        ));
+  }
+}
+
+class SecondRoute extends StatelessWidget {
+  const SecondRoute({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text('Flutter Demo Home Page'),
+      ),
+      body: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text('You have pushed the button this many times:'),
+            provider.Consumer<Globalz>(
+              builder: (context, global, child) => Text(
+                '${global.value}',
+                style: Theme.of(context).textTheme.headlineMedium,
+              ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          var global = context.read<Globalz>();
+          global.increment();
         },
-        onDaySelected: (selectedDay, focusedDay) {
-          if (!cal.isSameDay(_selectedDay, selectedDay)) {
-            // Call `setState()` when updating the selected day
-            setState(() {
-              _selectedDay = selectedDay;
-              _focusedDay = focusedDay;
-            });
-            final targetDay = DateTime.parse('2024-06-19');
-            if (cal.isSameDay(selectedDay, targetDay)) {
-              //debugPrint('selectedDay= $selectedDay, event= ${calutil.kEvents[selectedDay]?.first}');
-              //calutil.kEvents.forEach((k, v) => debugPrint('event= $k $v'));
-            }
-            calutil.kEvents[selectedDay]?.forEach((event) {
-              debugPrint('event= $event ($selectedDay)');
-            });
-          }
-        },
-        onFormatChanged: (format) {
-          if (_calendarFormat != format) {
-            // Call `setState()` when updating calendar format
-            setState(() {
-              _calendarFormat = format;
-            });
-          }
-        },
-        onPageChanged: (focusedDay) {
-          // No need to call `setState()` here
-          _focusedDay = focusedDay;
-        },
+        tooltip: 'Increment',
+        child: const Icon(Icons.add),
       ),
     );
   }
