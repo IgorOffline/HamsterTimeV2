@@ -45,7 +45,7 @@ class Category {
   String? name;
 
   @override
-  String toString() => 'Timelog= [id= $id, name= $name]';
+  String toString() => 'Category= [id= $id, name= $name]';
 }
 
 class Timelog {
@@ -96,7 +96,7 @@ String _dbUrl() {
   return 'C:\\C3\\dev\\flutter\\sqlite\\hamstertimev2.sqlite3';
 }
 
-List<Category> dbSelectCategories() {
+List<Category> dbCategorySelectAll() {
   debugPrint('Using sqlite3 ${sql.sqlite3.version}');
   final db = sql.sqlite3.open(_dbUrl());
 
@@ -118,6 +118,22 @@ List<Category> dbSelectCategories() {
   debugPrint('categories.length= ${categories.length}');
 
   return categories;
+}
+
+bool dbTimelogInsert(Timelog timelog) {
+  final now = DateTime.now();
+  timelog.ctime = now;
+  timelog.mtime = now;
+
+  debugPrint('Using sqlite3 ${sql.sqlite3.version}');
+  final db = sql.sqlite3.open(_dbUrl());
+
+  final stmt = db.prepare('INSERT INTO timelog (note, time, category, subcategory, ctime, mtime) VALUES (?, ?, ?, ?, ?, ?)');
+  stmt.execute([timelog.note, timelog.time.toString(), timelog.category, timelog.subcategory, timelog.ctime.toString(), timelog.mtime.toString()]);
+
+  db.dispose();
+
+  return true;
 }
 
 class MyApp extends StatelessWidget {
@@ -235,13 +251,13 @@ class SecondRoute extends StatefulWidget {
 }
 
 class _SecondRouteState extends State<SecondRoute> {
-  final categories = dbSelectCategories();
+  final categories = dbCategorySelectAll();
   final timeController = TextEditingController();
   final noteController = TextEditingController();
   final categoryController = TextEditingController();
   final subcategoryController = TextEditingController();
-  int? categoryId = -1;
-  int? subcategoryId = -1;
+  int? categoryId;
+  int? subcategoryId;
 
   @override
   void initState() {
@@ -297,6 +313,8 @@ class _SecondRouteState extends State<SecondRoute> {
                       timelog.category = categoryId;
                       timelog.subcategory = subcategoryId;
                       debugPrint('$timelog');
+                      dbTimelogInsert(timelog);
+                      Navigator.pop(context);
                     },
                     child: const Text('SAVE')),
                 const Text('You have pushed the button this many times:'),
