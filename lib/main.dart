@@ -19,7 +19,24 @@ class Globalz with ChangeNotifier {
 
   CalUtils calUtils = CalUtils();
 
+  var timeTimelogs = LinkedHashMap<DateTime, List<Timelog>>(
+      equals: cal.isSameDay,
+      hashCode: getDateTimeHashCode,
+      isValidKey: (key) => key != null);
+
   void increment() {
+    if (value == 0) {
+      final list = dbTimelogSelectAll();
+      for (final map in list) {
+        final t = map['timelog'] as Timelog;
+        if (timeTimelogs.containsKey(t.time)) {
+          timeTimelogs[t.time]!.add(t);
+        } else {
+          timeTimelogs[t.time!] = List<Timelog>.empty(growable: true);
+          timeTimelogs[t.time]!.add(t);
+        }
+      }
+    }
     value += 1;
     notifyListeners();
   }
@@ -37,6 +54,22 @@ class Globalz with ChangeNotifier {
   void setSelectedDay(DateTime selectedDay) {
     calUtils.selectedDay = selectedDay;
     notifyListeners();
+  }
+
+  int timeTimelogsLength() {
+    if (timeTimelogs[calUtils.selectedDay!] == null) {
+      return 0;
+    } else {
+      return timeTimelogs[calUtils.selectedDay!]!.length;
+    }
+  }
+
+  String getTimeTimelogNote(int index) {
+    if (timeTimelogs[calUtils.selectedDay!] == null) {
+      return '';
+    }
+    final note = timeTimelogs[calUtils.selectedDay!]!.elementAt(index).note;
+    return note == null ? '' : '$index. $note';
   }
 }
 
@@ -80,7 +113,7 @@ String _formatDateTimeToString(DateTime dt) {
   return intl.DateFormat('yyyy-MM-dd').format(dt);
 }
 
-DateTime _formatStringToDateTime(String s) {
+DateTime formatStringToDateTime(String s) {
   return DateTime.parse(s);
 }
 
@@ -88,7 +121,7 @@ String _formatDateTimeForInput(DateTime dt) {
   return '${_formatDateTimeToString(dt)} 00:00';
 }
 
-int _getDateTimeHashCode(DateTime key) {
+int getDateTimeHashCode(DateTime key) {
   return key.day * 1000000 + key.month * 10000 + key.year;
 }
 
@@ -147,10 +180,10 @@ List<Map<String, dynamic>> dbTimelogSelectAll() {
     t.id = row['id'];
     t.category = row['category_id'];
     t.subcategory = row['subcategory_id'];
-    t.time = _formatStringToDateTime(row['time']);
+    t.time = formatStringToDateTime(row['time']);
     t.note = row['note'];
-    t.ctime = _formatStringToDateTime(row['ctime']);
-    t.mtime = _formatStringToDateTime(row['mtime']);
+    t.ctime = formatStringToDateTime(row['ctime']);
+    t.mtime = formatStringToDateTime(row['mtime']);
     final c = Category();
     c.name = row['category_name'];
     final s = Category();
@@ -219,9 +252,28 @@ class MyHomePage extends StatelessWidget {
       ),
       body: Column(
         children: [
-          ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 300, maxHeight: 500),
-              child: const TableBasicsExample()),
+          Row(children: [
+            ConstrainedBox(
+                constraints:
+                    const BoxConstraints(maxWidth: 300, maxHeight: 500),
+                child: const TableBasicsExample()),
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                  maxWidth: MediaQuery.of(context).size.width - 320,
+                  maxHeight: 400),
+              child: Container(
+                  color: Theme.of(context).colorScheme.inversePrimary,
+                  child: provider.Consumer<Globalz>(
+                      builder: (context, global, child) => ListView.builder(
+                          itemCount: global.timeTimelogsLength(),
+                          prototypeItem:
+                              const ListTile(title: Text('Prototype')),
+                          itemBuilder: (context, index) {
+                            return ListTile(
+                                title: Text(global.getTimeTimelogNote(index)));
+                          }))),
+            ),
+          ]),
           ConstrainedBox(
             constraints: BoxConstraints(
                 maxWidth: MediaQuery.of(context).size.width - 320,
@@ -362,7 +414,7 @@ class _SecondRouteState extends State<SecondRoute> {
                     onPressed: () {
                       var timelog = Timelog();
                       timelog.time =
-                          _formatStringToDateTime(timeController.text);
+                          formatStringToDateTime(timeController.text);
                       timelog.note = noteController.text;
                       timelog.category = categoryId;
                       timelog.subcategory = subcategoryId;

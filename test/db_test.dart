@@ -1,8 +1,10 @@
+import 'dart:collection';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hamster_time_v2/main.dart';
+import 'package:table_calendar/table_calendar.dart' as cal;
 
 void main() {
-  //test3();
+  test4();
 }
 
 void test1() {
@@ -27,5 +29,33 @@ void test3() {
   testWidgets('Timelog select all', (WidgetTester tester) async {
     final timelogs = dbTimelogSelectAll();
     expect(timelogs.isNotEmpty, true);
+  });
+}
+
+void test4() {
+  testWidgets('Timelogs split by time', (WidgetTester tester) async {
+    final t1 = Timelog()..time = formatStringToDateTime('2024-06-21 01:00');
+    final t2 = Timelog()..time = formatStringToDateTime('2024-06-21 02:00');
+    final t3 = Timelog()..time = formatStringToDateTime('2024-06-22 03:00');
+    final t4 = Timelog()..time = formatStringToDateTime('2024-06-22 04:00');
+    final list = List<Timelog>.empty(growable: true);
+    list.add(t1);
+    list.add(t2);
+    list.add(t3);
+    list.add(t4);
+    var map = LinkedHashMap<DateTime, List<Timelog>>(
+      equals: cal.isSameDay,
+      hashCode: getDateTimeHashCode,
+      isValidKey: (key) => key != null
+    );
+    for (final t in list) {
+      if (map.containsKey(t.time)) {
+        map[t.time]!.add(t);
+      } else {
+        map[t.time!] = List<Timelog>.empty(growable: true);
+        map[t.time]!.add(t);
+      }
+    }
+    expect(map.isNotEmpty, true);
   });
 }
