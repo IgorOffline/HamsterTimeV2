@@ -120,6 +120,52 @@ List<Category> dbCategorySelectAll() {
   return categories;
 }
 
+List<Map<String, dynamic>> dbTimelogSelectAll() {
+  debugPrint('Using sqlite3 ${sql.sqlite3.version}');
+  final db = sql.sqlite3.open(_dbUrl());
+
+  final sql.ResultSet resultSet = db.select("""
+  select 
+  t.id_timelog id,
+  t.category_id,
+  c.name 'category_name',
+  t.subcategory_id,
+  s.name 'subcategory_name',
+  t.time,
+  t.note,
+  t.ctime,
+  t.mtime
+  from timelog t
+  left join category c on t.category_id == c.id_category
+  left join category s on t.subcategory_id == s.id_category;
+  """);
+
+  final timelogs = List<Map<String, dynamic>>.empty(growable: true);
+
+  for (final sql.Row row in resultSet) {
+    final t = Timelog();
+    t.id = row['id'];
+    t.category = row['category_id'];
+    t.subcategory = row['subcategory_id'];
+    t.time = _formatStringToDateTime(row['time']);
+    t.note = row['note'];
+    t.ctime = _formatStringToDateTime(row['ctime']);
+    t.mtime = _formatStringToDateTime(row['mtime']);
+    final c = Category();
+    c.name = row['category_name'];
+    final s = Category();
+    s.name = row['subcategory_name'];
+
+    timelogs.add({
+      'timelog': t,
+      'category': c,
+      'subcategory': s,
+    });
+  }
+
+  return timelogs;
+}
+
 bool dbTimelogInsert(Timelog timelog) {
   final now = DateTime.now();
   timelog.ctime = now;
@@ -128,8 +174,16 @@ bool dbTimelogInsert(Timelog timelog) {
   debugPrint('Using sqlite3 ${sql.sqlite3.version}');
   final db = sql.sqlite3.open(_dbUrl());
 
-  final stmt = db.prepare('INSERT INTO timelog (note, time, category, subcategory, ctime, mtime) VALUES (?, ?, ?, ?, ?, ?)');
-  stmt.execute([timelog.note, timelog.time.toString(), timelog.category, timelog.subcategory, timelog.ctime.toString(), timelog.mtime.toString()]);
+  final stmt = db.prepare(
+      'INSERT INTO timelog (note, time, category_id, subcategory_id, ctime, mtime) VALUES (?, ?, ?, ?, ?, ?)');
+  stmt.execute([
+    timelog.note,
+    timelog.time.toString(),
+    timelog.category,
+    timelog.subcategory,
+    timelog.ctime.toString(),
+    timelog.mtime.toString()
+  ]);
 
   db.dispose();
 
