@@ -18,7 +18,7 @@ void test2() {
   testWidgets('Insert successful', (WidgetTester tester) async {
     final timelog = Timelog();
     timelog.note = '<TEST>';
-    timelog.time = DateTime.now();
+    timelog.startTime = DateTime.now();
     timelog.category = 1;
     final insert = dbTimelogInsert(timelog);
     expect(insert, true);
@@ -34,10 +34,10 @@ void test3() {
 
 void test4() {
   testWidgets('Timelogs split by time', (WidgetTester tester) async {
-    final t1 = Timelog()..time = formatStringToDateTime('2024-06-21 01:00');
-    final t2 = Timelog()..time = formatStringToDateTime('2024-06-21 02:00');
-    final t3 = Timelog()..time = formatStringToDateTime('2024-06-22 03:00');
-    final t4 = Timelog()..time = formatStringToDateTime('2024-06-22 04:00');
+    final t1 = Timelog()..startTime = formatStringToDateTime('2024-06-21 01:00');
+    final t2 = Timelog()..startTime = formatStringToDateTime('2024-06-21 02:00');
+    final t3 = Timelog()..startTime = formatStringToDateTime('2024-06-22 03:00');
+    final t4 = Timelog()..startTime = formatStringToDateTime('2024-06-22 04:00');
     final list = List<Timelog>.empty(growable: true);
     list.add(t1);
     list.add(t2);
@@ -49,11 +49,11 @@ void test4() {
       isValidKey: (key) => key != null
     );
     for (final t in list) {
-      if (map.containsKey(t.time)) {
-        map[t.time]!.add(t);
+      if (map.containsKey(t.startTime)) {
+        map[t.startTime]!.add(t);
       } else {
-        map[t.time!] = List<Timelog>.empty(growable: true);
-        map[t.time]!.add(t);
+        map[t.startTime!] = List<Timelog>.empty(growable: true);
+        map[t.startTime]!.add(t);
       }
     }
     expect(map.isNotEmpty, true);

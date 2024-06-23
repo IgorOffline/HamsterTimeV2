@@ -24,19 +24,22 @@ class Globalz with ChangeNotifier {
       hashCode: getDateTimeHashCode,
       isValidKey: (key) => key != null);
 
-  void increment() {
-    if (value == 0) {
-      final list = dbTimelogSelectAll();
-      for (final map in list) {
-        final t = map['timelog'] as Timelog;
-        if (timeTimelogs.containsKey(t.time)) {
-          timeTimelogs[t.time]!.add(t);
-        } else {
-          timeTimelogs[t.time!] = List<Timelog>.empty(growable: true);
-          timeTimelogs[t.time]!.add(t);
-        }
+  void initGlobal() {
+    timeTimelogs.clear();
+    final list = dbTimelogSelectAll();
+    for (final map in list) {
+      final t = map['timelog'] as Timelog;
+      if (timeTimelogs.containsKey(t.startTime)) {
+        timeTimelogs[t.startTime]!.add(t);
+      } else {
+        timeTimelogs[t.startTime!] = List<Timelog>.empty(growable: true);
+        timeTimelogs[t.startTime]!.add(t);
       }
     }
+    notifyListeners();
+  }
+
+  void increment() {
     value += 1;
     notifyListeners();
   }
@@ -78,20 +81,21 @@ class Category {
   String? name;
 
   @override
-  String toString() => 'Category= [id= $id, name= $name]';
+  String toString() => 'Category= [id=$id, name=$name]';
 }
 
 class Timelog {
   int? id;
   int? category;
   int? subcategory;
-  DateTime? time;
+  DateTime? startTime;
+  DateTime? endTime;
   String? note;
   DateTime? ctime;
   DateTime? mtime;
 
   @override
-  String toString() => 'Timelog= [id= $id, note= $note]';
+  String toString() => 'Timelog= [id=$id, note=$note, startTime=$startTime]';
 }
 
 class CalUtils {
@@ -164,7 +168,8 @@ List<Map<String, dynamic>> dbTimelogSelectAll() {
   c.name 'category_name',
   t.subcategory_id,
   s.name 'subcategory_name',
-  t.time,
+  t.start_time,
+  t.end_time,
   t.note,
   t.ctime,
   t.mtime
@@ -180,7 +185,8 @@ List<Map<String, dynamic>> dbTimelogSelectAll() {
     t.id = row['id'];
     t.category = row['category_id'];
     t.subcategory = row['subcategory_id'];
-    t.time = formatStringToDateTime(row['time']);
+    t.startTime = formatStringToDateTime(row['start_time']);
+    t.endTime = formatStringToDateTime(row['end_time']);
     t.note = row['note'];
     t.ctime = formatStringToDateTime(row['ctime']);
     t.mtime = formatStringToDateTime(row['mtime']);
@@ -208,10 +214,11 @@ bool dbTimelogInsert(Timelog timelog) {
   final db = sql.sqlite3.open(_dbUrl());
 
   final stmt = db.prepare(
-      'INSERT INTO timelog (note, time, category_id, subcategory_id, ctime, mtime) VALUES (?, ?, ?, ?, ?, ?)');
+      'INSERT INTO timelog (note, start_time, end_time, category_id, subcategory_id, ctime, mtime) VALUES (?, ?, ?, ?, ?, ?, ?)');
   stmt.execute([
     timelog.note,
-    timelog.time.toString(),
+    timelog.startTime.toString(),
+    timelog.endTime.toString(),
     timelog.category,
     timelog.subcategory,
     timelog.ctime.toString(),
@@ -240,8 +247,22 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class MyHomePage extends StatelessWidget {
+class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
+
+  @override
+  State<StatefulWidget> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<MyHomePage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      var global = context.read<Globalz>();
+      global.initGlobal();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -287,7 +308,8 @@ class MyHomePage extends StatelessWidget {
                                 context,
                                 MaterialPageRoute(
                                     builder: (context) => SecondRoute(
-                                        time: global.calUtils.selectedDay!)));
+                                        selectedDay:
+                                            global.calUtils.selectedDay!)));
                           },
                           child: Text(
                             'SecondRoute (${global.value})',
@@ -348,9 +370,9 @@ class TableBasicsExample extends StatelessWidget {
 }
 
 class SecondRoute extends StatefulWidget {
-  const SecondRoute({super.key, required this.time});
+  const SecondRoute({super.key, required this.selectedDay});
 
-  final DateTime time;
+  final DateTime selectedDay;
 
   @override
   State<StatefulWidget> createState() => _SecondRouteState();
@@ -358,7 +380,8 @@ class SecondRoute extends StatefulWidget {
 
 class _SecondRouteState extends State<SecondRoute> {
   final categories = dbCategorySelectAll();
-  final timeController = TextEditingController();
+  final startTimeController = TextEditingController();
+  final endTimeController = TextEditingController();
   final noteController = TextEditingController();
   final categoryController = TextEditingController();
   final subcategoryController = TextEditingController();
@@ -368,7 +391,8 @@ class _SecondRouteState extends State<SecondRoute> {
   @override
   void initState() {
     super.initState();
-    timeController.text = _formatDateTimeForInput(widget.time);
+    startTimeController.text = _formatDateTimeForInput(widget.selectedDay);
+    endTimeController.text = _formatDateTimeForInput(widget.selectedDay);
   }
 
   @override
@@ -385,9 +409,14 @@ class _SecondRouteState extends State<SecondRoute> {
             Column(
               children: [
                 TextFormField(
-                    controller: timeController,
+                    controller: startTimeController,
                     decoration: const InputDecoration(
-                        border: UnderlineInputBorder(), labelText: 'Time')),
+                        border: UnderlineInputBorder(),
+                        labelText: 'Start time')),
+                TextFormField(
+                    controller: endTimeController,
+                    decoration: const InputDecoration(
+                        border: UnderlineInputBorder(), labelText: 'End time')),
                 TextFormField(
                     controller: noteController,
                     decoration: const InputDecoration(
@@ -413,13 +442,17 @@ class _SecondRouteState extends State<SecondRoute> {
                 TextButton(
                     onPressed: () {
                       var timelog = Timelog();
-                      timelog.time =
-                          formatStringToDateTime(timeController.text);
+                      timelog.startTime =
+                          formatStringToDateTime(startTimeController.text);
+                      timelog.endTime =
+                          formatStringToDateTime(endTimeController.text);
                       timelog.note = noteController.text;
                       timelog.category = categoryId;
                       timelog.subcategory = subcategoryId;
                       debugPrint('$timelog');
                       dbTimelogInsert(timelog);
+                      var global = context.read<Globalz>();
+                      global.initGlobal();
                       Navigator.pop(context);
                     },
                     child: const Text('SAVE')),
