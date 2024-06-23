@@ -71,8 +71,14 @@ class Globalz with ChangeNotifier {
     if (timeTimelogs[calUtils.selectedDay!] == null) {
       return '';
     }
-    final note = timeTimelogs[calUtils.selectedDay!]!.elementAt(index).note;
-    return note == null ? '' : '$index. $note';
+    final t = timeTimelogs[calUtils.selectedDay!]!.elementAt(index);
+    final startTimeStr =
+        t.startTime == null ? '' : _formatDateTimeToTimeString(t.startTime!);
+    final endTimeStr =
+        t.endTime == null ? '' : _formatDateTimeToTimeString(t.endTime!);
+    return t.note == null
+        ? ''
+        : '${index + 1}. ($startTimeStr-$endTimeStr) ${t.note}';
   }
 }
 
@@ -113,8 +119,12 @@ class CalUtils {
   DateTime? lastDay;
 }
 
-String _formatDateTimeToString(DateTime dt) {
+String _formatDateTimeToDateString(DateTime dt) {
   return intl.DateFormat('yyyy-MM-dd').format(dt);
+}
+
+String _formatDateTimeToTimeString(DateTime dt) {
+  return intl.DateFormat().add_Hm().format(dt);
 }
 
 DateTime formatStringToDateTime(String s) {
@@ -122,7 +132,7 @@ DateTime formatStringToDateTime(String s) {
 }
 
 String _formatDateTimeForInput(DateTime dt) {
-  return '${_formatDateTimeToString(dt)} 00:00';
+  return '${_formatDateTimeToDateString(dt)} 00:00';
 }
 
 int getDateTimeHashCode(DateTime key) {
@@ -230,6 +240,15 @@ bool dbTimelogInsert(Timelog timelog) {
   return true;
 }
 
+bool dbTimelogUpdate(Timelog timelog) {
+  final now = DateTime.now();
+  timelog.mtime = now;
+
+  //
+
+  return true;
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -291,7 +310,20 @@ class _HomePageState extends State<MyHomePage> {
                               const ListTile(title: Text('Prototype')),
                           itemBuilder: (context, index) {
                             return ListTile(
-                                title: Text(global.getTimeTimelogNote(index)));
+                                title: Row(
+                              children: [
+                                Flexible(
+                                    child: Text(
+                                        global.getTimeTimelogNote(index),
+                                        overflow: TextOverflow.ellipsis, maxLines: 2,)),
+                                TextButton(
+                                  child: const Icon(Icons.edit),
+                                  onPressed: () {
+                                    debugPrint('$index');
+                                  },
+                                )
+                              ],
+                            ));
                           }))),
             ),
           ]),
@@ -307,9 +339,11 @@ class _HomePageState extends State<MyHomePage> {
                             Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                    builder: (context) => SecondRoute(
-                                        selectedDay:
-                                            global.calUtils.selectedDay!)));
+                                    builder: (context) =>
+                                        TimelogInsertUpdateRoute(
+                                            selectedDay:
+                                                global.calUtils.selectedDay!,
+                                            timelog: Timelog())));
                           },
                           child: Text(
                             'SecondRoute (${global.value})',
@@ -369,16 +403,18 @@ class TableBasicsExample extends StatelessWidget {
   }
 }
 
-class SecondRoute extends StatefulWidget {
-  const SecondRoute({super.key, required this.selectedDay});
+class TimelogInsertUpdateRoute extends StatefulWidget {
+  const TimelogInsertUpdateRoute(
+      {super.key, required this.selectedDay, required this.timelog});
 
   final DateTime selectedDay;
+  final Timelog timelog;
 
   @override
-  State<StatefulWidget> createState() => _SecondRouteState();
+  State<StatefulWidget> createState() => _TimelogInsertUpdateRouteState();
 }
 
-class _SecondRouteState extends State<SecondRoute> {
+class _TimelogInsertUpdateRouteState extends State<TimelogInsertUpdateRoute> {
   final categories = dbCategorySelectAll();
   final startTimeController = TextEditingController();
   final endTimeController = TextEditingController();
@@ -391,8 +427,26 @@ class _SecondRouteState extends State<SecondRoute> {
   @override
   void initState() {
     super.initState();
-    startTimeController.text = _formatDateTimeForInput(widget.selectedDay);
-    endTimeController.text = _formatDateTimeForInput(widget.selectedDay);
+    debugPrint('${widget.timelog}');
+    if (widget.timelog.id == null) {
+      startTimeController.text = _formatDateTimeForInput(widget.selectedDay);
+      endTimeController.text = _formatDateTimeForInput(widget.selectedDay);
+    } else {
+      startTimeController.text =
+          _formatDateTimeForInput(widget.timelog.startTime!);
+      endTimeController.text = _formatDateTimeForInput(widget.timelog.endTime!);
+      noteController.text = widget.timelog.note!;
+      if (widget.timelog.category != null) {
+        categories.firstWhere((e) => e.id == widget.timelog.category);
+      }
+      if (widget.timelog.subcategory != null) {
+        categories.firstWhere((e) => e.id == widget.timelog.subcategory);
+      }
+    }
+  }
+
+  String getTitle() {
+    return widget.timelog.id == null ? 'New Timelog' : 'Edit Timelog';
   }
 
   @override
@@ -400,7 +454,7 @@ class _SecondRouteState extends State<SecondRoute> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('Second Route'),
+        title: Text(getTitle()),
       ),
       body: Center(
         child: Column(
@@ -450,7 +504,11 @@ class _SecondRouteState extends State<SecondRoute> {
                       timelog.category = categoryId;
                       timelog.subcategory = subcategoryId;
                       debugPrint('$timelog');
-                      dbTimelogInsert(timelog);
+                      if (widget.timelog.id == null) {
+                        dbTimelogInsert(timelog);
+                      } else {
+                        dbTimelogUpdate(timelog);
+                      }
                       var global = context.read<Globalz>();
                       global.initGlobal();
                       Navigator.pop(context);
