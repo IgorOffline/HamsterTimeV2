@@ -157,7 +157,7 @@ List<Category> dbCategorySelectAll() {
   final db = sql.sqlite3.open(_dbUrl());
 
   final sql.ResultSet resultSet =
-      db.select('SELECT c.id_category id, c.name FROM category c');
+      db.select('select c.id_category id, c.name from category c');
 
   final categories = List<Category>.empty(growable: true);
 
@@ -233,7 +233,7 @@ bool dbTimelogInsert(Timelog timelog) {
   final db = sql.sqlite3.open(_dbUrl());
 
   final stmt = db.prepare(
-      'INSERT INTO timelog (note, start_time, end_time, category_id, subcategory_id, ctime, mtime) VALUES (?, ?, ?, ?, ?, ?, ?)');
+      'insert into timelog (note, start_time, end_time, category_id, subcategory_id, ctime, mtime) values (?, ?, ?, ?, ?, ?, ?)');
   stmt.execute([
     timelog.note,
     timelog.startTime.toString(),
@@ -257,7 +257,7 @@ bool dbTimelogUpdate(Timelog timelog) {
   final db = sql.sqlite3.open(_dbUrl());
 
   final stmt = db.prepare(
-      'UPDATE timelog SET note=?, category_id=?, subcategory_id=?, start_time=?, end_time=?, mtime=? WHERE id_timelog=?');
+      'update timelog SET note=?, category_id=?, subcategory_id=?, start_time=?, end_time=?, mtime=? where id_timelog=?');
   stmt.execute([
     timelog.note,
     timelog.category,
@@ -312,79 +312,88 @@ class _HomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: const Text('Flutter Demo Home Page'),
+        title: const Text('Hamster Time V2'),
       ),
-      body: Column(
-        children: [
-          Row(children: [
-            ConstrainedBox(
-                constraints:
-                    const BoxConstraints(maxWidth: 300, maxHeight: 500),
-                child: const TableBasicsExample()),
+      body: Center(
+        child: Column(
+          children: [
+            Row(children: [
+              Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: ConstrainedBox(
+                      constraints:
+                          const BoxConstraints(maxWidth: 300, maxHeight: 500),
+                      child: const TableBasicsExample())),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(
+                      maxWidth: MediaQuery.of(context).size.width - 332,
+                      maxHeight: MediaQuery.of(context).size.height - 170),
+                  child: Container(
+                      color: Theme.of(context).colorScheme.inversePrimary,
+                      child: provider.Consumer<Globalz>(
+                          builder: (context, global, child) => ListView.builder(
+                              itemCount: global.getTimeTimelogsLength(),
+                              prototypeItem:
+                                  const ListTile(title: Text('Prototype')),
+                              itemBuilder: (context, index) {
+                                return ListTile(
+                                    title: Row(
+                                  children: [
+                                    Flexible(
+                                        child: Text(
+                                      global.getTimeTimelogNote(index),
+                                      overflow: TextOverflow.ellipsis,
+                                      maxLines: 2,
+                                    )),
+                                    TextButton(
+                                      child: const Icon(Icons.edit),
+                                      onPressed: () async {
+                                        Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (context) =>
+                                                    TimelogInsertUpdateRoute(
+                                                        selectedDay: global
+                                                            .calUtils
+                                                            .selectedDay!,
+                                                        timelog:
+                                                            global.getTimelog(
+                                                                index))));
+                                      },
+                                    )
+                                  ],
+                                ));
+                              }))),
+                ),
+              ),
+            ]),
             ConstrainedBox(
               constraints: BoxConstraints(
                   maxWidth: MediaQuery.of(context).size.width - 320,
-                  maxHeight: 400),
+                  maxHeight: 100),
               child: Container(
                   color: Theme.of(context).colorScheme.inversePrimary,
                   child: provider.Consumer<Globalz>(
-                      builder: (context, global, child) => ListView.builder(
-                          itemCount: global.getTimeTimelogsLength(),
-                          prototypeItem:
-                              const ListTile(title: Text('Prototype')),
-                          itemBuilder: (context, index) {
-                            return ListTile(
-                                title: Row(
-                              children: [
-                                Flexible(
-                                    child: Text(
-                                  global.getTimeTimelogNote(index),
-                                  overflow: TextOverflow.ellipsis,
-                                  maxLines: 2,
-                                )),
-                                TextButton(
-                                  child: const Icon(Icons.edit),
-                                  onPressed: () async {
-                                    Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                TimelogInsertUpdateRoute(
-                                                    selectedDay: global
-                                                        .calUtils.selectedDay!,
-                                                    timelog: global
-                                                        .getTimelog(index))));
-                                  },
-                                )
-                              ],
-                            ));
-                          }))),
+                      builder: (context, global, child) => TextButton(
+                            onPressed: () async {
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          TimelogInsertUpdateRoute(
+                                              selectedDay:
+                                                  global.calUtils.selectedDay!,
+                                              timelog: Timelog())));
+                            },
+                            child: Text(
+                              'New Timelog (${global.value})',
+                            ),
+                          ))),
             ),
-          ]),
-          ConstrainedBox(
-            constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width - 320,
-                maxHeight: 400),
-            child: Container(
-                color: Theme.of(context).colorScheme.inversePrimary,
-                child: provider.Consumer<Globalz>(
-                    builder: (context, global, child) => TextButton(
-                          onPressed: () async {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        TimelogInsertUpdateRoute(
-                                            selectedDay:
-                                                global.calUtils.selectedDay!,
-                                            timelog: Timelog())));
-                          },
-                          child: Text(
-                            'New Timelog (${global.value})',
-                          ),
-                        ))),
-          ),
-        ],
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -404,36 +413,33 @@ class TableBasicsExample extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          title: const Text('TableCalendar'),
-        ),
         body: provider.Consumer<Globalz>(
-          builder: (context, global, child) => cal.TableCalendar(
-            firstDay: global.calUtils.firstDay!,
-            lastDay: global.calUtils.lastDay!,
-            focusedDay: global.calUtils.focusedDay,
-            calendarFormat: global.calUtils.calendarFormat,
-            selectedDayPredicate: (day) {
-              return cal.isSameDay(global.calUtils.selectedDay, day);
-            },
-            onDaySelected: (selectedDay, focusedDay) {
-              if (!cal.isSameDay(global.calUtils.selectedDay, selectedDay)) {
-                var global = context.read<Globalz>();
-                global.setSelectedDay(selectedDay);
-                global.setFocusedDay(focusedDay);
-              }
-            },
-            onFormatChanged: (format) {
-              if (global.calUtils.calendarFormat != format) {
-                var global = context.read<Globalz>();
-                global.setCalendarFormat(format);
-              }
-            },
-            onPageChanged: (focusedDay) {
-              global.calUtils.focusedDay = focusedDay;
-            },
-          ),
-        ));
+      builder: (context, global, child) => cal.TableCalendar(
+        firstDay: global.calUtils.firstDay!,
+        lastDay: global.calUtils.lastDay!,
+        focusedDay: global.calUtils.focusedDay,
+        calendarFormat: global.calUtils.calendarFormat,
+        selectedDayPredicate: (day) {
+          return cal.isSameDay(global.calUtils.selectedDay, day);
+        },
+        onDaySelected: (selectedDay, focusedDay) {
+          if (!cal.isSameDay(global.calUtils.selectedDay, selectedDay)) {
+            var global = context.read<Globalz>();
+            global.setSelectedDay(selectedDay);
+            global.setFocusedDay(focusedDay);
+          }
+        },
+        onFormatChanged: (format) {
+          if (global.calUtils.calendarFormat != format) {
+            var global = context.read<Globalz>();
+            global.setCalendarFormat(format);
+          }
+        },
+        onPageChanged: (focusedDay) {
+          global.calUtils.focusedDay = focusedDay;
+        },
+      ),
+    ));
   }
 }
 
