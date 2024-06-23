@@ -36,6 +36,7 @@ dependencies:
   sqlite3: ^2.4.3
   sqlite3_flutter_libs: ^0.5.24
   provider: ^6.1.2
+  collection: ^1.18.0
   window_size:
     git:
       url: https://github.com/google/flutter-desktop-embedding.git

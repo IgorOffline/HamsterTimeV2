@@ -1,6 +1,7 @@
 import 'dart:collection';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:hamster_time_v2/main.dart';
+import 'package:hamster_time_v2/db.dart';
+import 'package:hamster_time_v2/models.dart';
 import 'package:table_calendar/table_calendar.dart' as cal;
 
 void main() {
