@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' as provider;
 import 'package:table_calendar/table_calendar.dart' as cal;
@@ -59,7 +60,7 @@ class Globalz with ChangeNotifier {
     notifyListeners();
   }
 
-  int timeTimelogsLength() {
+  int getTimeTimelogsLength() {
     if (timeTimelogs[calUtils.selectedDay!] == null) {
       return 0;
     } else {
@@ -79,6 +80,10 @@ class Globalz with ChangeNotifier {
     return t.note == null
         ? ''
         : '${index + 1}. ($startTimeStr-$endTimeStr) ${t.note}';
+  }
+
+  Timelog getTimelog(int index) {
+    return timeTimelogs[calUtils.selectedDay!]!.elementAt(index);
   }
 }
 
@@ -131,8 +136,12 @@ DateTime formatStringToDateTime(String s) {
   return DateTime.parse(s);
 }
 
-String _formatDateTimeForInput(DateTime dt) {
+String _formatDateTimeForInputEmpty(DateTime dt) {
   return '${_formatDateTimeToDateString(dt)} 00:00';
+}
+
+String _formatDateTimeForInput(DateTime dt) {
+  return intl.DateFormat('yyyy-MM-dd').add_Hm().format(dt);
 }
 
 int getDateTimeHashCode(DateTime key) {
@@ -244,7 +253,22 @@ bool dbTimelogUpdate(Timelog timelog) {
   final now = DateTime.now();
   timelog.mtime = now;
 
-  //
+  debugPrint('Using sqlite3 ${sql.sqlite3.version}');
+  final db = sql.sqlite3.open(_dbUrl());
+
+  final stmt = db.prepare(
+      'UPDATE timelog SET note=?, category_id=?, subcategory_id=?, start_time=?, end_time=?, mtime=? WHERE id_timelog=?');
+  stmt.execute([
+    timelog.note,
+    timelog.category,
+    timelog.subcategory,
+    timelog.startTime.toString(),
+    timelog.endTime.toString(),
+    timelog.mtime.toString(),
+    timelog.id
+  ]);
+
+  db.dispose();
 
   return true;
 }
@@ -305,7 +329,7 @@ class _HomePageState extends State<MyHomePage> {
                   color: Theme.of(context).colorScheme.inversePrimary,
                   child: provider.Consumer<Globalz>(
                       builder: (context, global, child) => ListView.builder(
-                          itemCount: global.timeTimelogsLength(),
+                          itemCount: global.getTimeTimelogsLength(),
                           prototypeItem:
                               const ListTile(title: Text('Prototype')),
                           itemBuilder: (context, index) {
@@ -314,12 +338,22 @@ class _HomePageState extends State<MyHomePage> {
                               children: [
                                 Flexible(
                                     child: Text(
-                                        global.getTimeTimelogNote(index),
-                                        overflow: TextOverflow.ellipsis, maxLines: 2,)),
+                                  global.getTimeTimelogNote(index),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 2,
+                                )),
                                 TextButton(
                                   child: const Icon(Icons.edit),
-                                  onPressed: () {
-                                    debugPrint('$index');
+                                  onPressed: () async {
+                                    Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                TimelogInsertUpdateRoute(
+                                                    selectedDay: global
+                                                        .calUtils.selectedDay!,
+                                                    timelog: global
+                                                        .getTimelog(index))));
                                   },
                                 )
                               ],
@@ -346,7 +380,7 @@ class _HomePageState extends State<MyHomePage> {
                                             timelog: Timelog())));
                           },
                           child: Text(
-                            'SecondRoute (${global.value})',
+                            'New Timelog (${global.value})',
                           ),
                         ))),
           ),
@@ -429,18 +463,29 @@ class _TimelogInsertUpdateRouteState extends State<TimelogInsertUpdateRoute> {
     super.initState();
     debugPrint('${widget.timelog}');
     if (widget.timelog.id == null) {
-      startTimeController.text = _formatDateTimeForInput(widget.selectedDay);
-      endTimeController.text = _formatDateTimeForInput(widget.selectedDay);
+      startTimeController.text =
+          _formatDateTimeForInputEmpty(widget.selectedDay);
+      endTimeController.text = _formatDateTimeForInputEmpty(widget.selectedDay);
     } else {
       startTimeController.text =
           _formatDateTimeForInput(widget.timelog.startTime!);
       endTimeController.text = _formatDateTimeForInput(widget.timelog.endTime!);
       noteController.text = widget.timelog.note!;
       if (widget.timelog.category != null) {
-        categories.firstWhere((e) => e.id == widget.timelog.category);
+        final category =
+            categories.firstWhereOrNull((e) => e.id == widget.timelog.category);
+        if (category != null) {
+          categoryController.text = category.name!;
+          categoryId = category.id;
+        }
       }
       if (widget.timelog.subcategory != null) {
-        categories.firstWhere((e) => e.id == widget.timelog.subcategory);
+        final subcategory = categories
+            .firstWhereOrNull((e) => e.id == widget.timelog.subcategory);
+        if (subcategory != null) {
+          subcategoryController.text = subcategory.name!;
+          subcategoryId = subcategory.id;
+        }
       }
     }
   }
@@ -507,6 +552,7 @@ class _TimelogInsertUpdateRouteState extends State<TimelogInsertUpdateRoute> {
                       if (widget.timelog.id == null) {
                         dbTimelogInsert(timelog);
                       } else {
+                        timelog.id = widget.timelog.id;
                         dbTimelogUpdate(timelog);
                       }
                       var global = context.read<Globalz>();
