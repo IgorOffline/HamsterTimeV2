@@ -369,10 +369,9 @@ class _HomePageState extends State<MyHomePage> {
                 ),
               ),
             ]),
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                  maxWidth: MediaQuery.of(context).size.width - 320,
-                  maxHeight: 100),
+            const Spacer(),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
               child: Container(
                   color: Theme.of(context).colorScheme.inversePrimary,
                   child: provider.Consumer<Globalz>(
