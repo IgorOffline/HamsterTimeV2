@@ -1,11 +1,9 @@
 import 'dart:collection';
 import 'package:collection/collection.dart';
-import 'db.dart';
 import 'models.dart';
 import 'package:table_calendar/table_calendar.dart' as cal;
 
-LinkedHashMap<DateTime, Map<Category, Duration>> groupTimelogCategoriesByDayAndSumDurations() {
-  final list = timelogSelectAll();
+LinkedHashMap<DateTime, Map<Category, Duration>> groupTimelogCategoriesByDayAndSumDurations(List<TimelogWithCategories> list) {
   var map1 = _step1(list);
   return _step2(map1);
 }

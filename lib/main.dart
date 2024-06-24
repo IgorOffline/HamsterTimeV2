@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:hamster_time_v2/graph_route.dart';
-import 'package:hamster_time_v2/timelog_route.dart';
+import 'package:hamster_time_v2/widgets/calendar_widget.dart';
+import 'package:hamster_time_v2/widgets/graph_widget.dart';
+import 'package:hamster_time_v2/widgets/timelog_widget.dart';
 import 'package:provider/provider.dart' as provider;
-import 'package:table_calendar/table_calendar.dart' as cal;
 import 'colors.dart' as colorz;
 import 'models.dart';
 
@@ -40,6 +40,8 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<MyHomePage> {
+  var graphView = false;
+
   @override
   void initState() {
     super.initState();
@@ -77,8 +79,13 @@ class _HomePageState extends State<MyHomePage> {
                           border:
                               Border(bottom: BorderSide(), left: BorderSide())),
                       child: provider.Consumer<Globalz>(
-                          builder: (context, global, child) =>
-                              _listView(global))),
+                          builder: (context, global, child) {
+                        if (graphView) {
+                          return GraphWidget(global: global);
+                        } else {
+                          return _listView(global);
+                        }
+                      })),
                 ),
               ),
             ]),
@@ -96,7 +103,7 @@ class _HomePageState extends State<MyHomePage> {
                                   Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                          builder: (context) => TimelogRoute(
+                                          builder: (context) => TimelogWidget(
                                               selectedDay:
                                                   global.calUtils.selectedDay!,
                                               timelog:
@@ -113,13 +120,9 @@ class _HomePageState extends State<MyHomePage> {
                       child: provider.Consumer<Globalz>(
                           builder: (context, global, child) => TextButton(
                                 onPressed: () async {
-                                  Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                              builder: (context) =>
-                                                  const GraphRoute()))
-                                      .whenComplete(() {
-                                    _initGlobal();
+                                  setState(() {
+                                    graphView = !graphView;
+                                    debugPrint('$graphView');
                                   });
                                 },
                                 child: const Text('View Graph'),
@@ -161,7 +164,7 @@ class _HomePageState extends State<MyHomePage> {
                   Navigator.push(
                           context,
                           MaterialPageRoute(
-                              builder: (context) => TimelogRoute(
+                              builder: (context) => TimelogWidget(
                                   selectedDay: global.calUtils.selectedDay!,
                                   timelog: global.getTimelog(index))))
                       .whenComplete(() {
@@ -178,41 +181,5 @@ class _HomePageState extends State<MyHomePage> {
     debugPrint('_initGlobal()');
     var global = context.read<Globalz>();
     global.initGlobal();
-  }
-}
-
-class TableBasicsExample extends StatelessWidget {
-  const TableBasicsExample({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-        body: provider.Consumer<Globalz>(
-      builder: (context, global, child) => cal.TableCalendar(
-        firstDay: global.calUtils.firstDay!,
-        lastDay: global.calUtils.lastDay!,
-        focusedDay: global.calUtils.focusedDay,
-        calendarFormat: global.calUtils.calendarFormat,
-        selectedDayPredicate: (day) {
-          return cal.isSameDay(global.calUtils.selectedDay, day);
-        },
-        onDaySelected: (selectedDay, focusedDay) {
-          if (!cal.isSameDay(global.calUtils.selectedDay, selectedDay)) {
-            var global = context.read<Globalz>();
-            global.setSelectedDay(selectedDay);
-            global.setFocusedDay(focusedDay);
-          }
-        },
-        onFormatChanged: (format) {
-          if (global.calUtils.calendarFormat != format) {
-            var global = context.read<Globalz>();
-            global.setCalendarFormat(format);
-          }
-        },
-        onPageChanged: (focusedDay) {
-          global.calUtils.focusedDay = focusedDay;
-        },
-      ),
-    ));
   }
 }

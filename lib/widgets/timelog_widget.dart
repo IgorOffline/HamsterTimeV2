@@ -1,22 +1,22 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' as provider;
-import 'db.dart' as db;
-import 'models.dart';
-import 'colors.dart' as colorz;
+import '../db.dart' as db;
+import '../models.dart';
+import '../colors.dart' as colorz;
 
-class TimelogRoute extends StatefulWidget {
-  const TimelogRoute(
+class TimelogWidget extends StatefulWidget {
+  const TimelogWidget(
       {super.key, required this.selectedDay, required this.timelog});
 
   final DateTime selectedDay;
   final Timelog timelog;
 
   @override
-  State<StatefulWidget> createState() => _TimelogRouteState();
+  State<StatefulWidget> createState() => _TimelogWidgetState();
 }
 
-class _TimelogRouteState extends State<TimelogRoute> {
+class _TimelogWidgetState extends State<TimelogWidget> {
   final categories = db.categorySelectAll();
   final startTimeController = TextEditingController();
   final endTimeController = TextEditingController();

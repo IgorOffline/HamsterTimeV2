@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart' as cal;
 import 'package:intl/intl.dart' as intl;
+import 'advanced_group_by.dart' as group_by;
 import 'db.dart' as db;
 
 class Globalz with ChangeNotifier {
@@ -9,23 +10,30 @@ class Globalz with ChangeNotifier {
 
   CalUtils calUtils = CalUtils();
 
-  var timeTimelogs = LinkedHashMap<DateTime, List<Timelog>>(
+  var dayTimelogs = LinkedHashMap<DateTime, List<Timelog>>(
+      equals: cal.isSameDay,
+      hashCode: getDateTimeHashCode,
+      isValidKey: (key) => key != null);
+
+  var dayCategoryDuration = LinkedHashMap<DateTime, Map<Category, Duration>>(
       equals: cal.isSameDay,
       hashCode: getDateTimeHashCode,
       isValidKey: (key) => key != null);
 
   void initGlobal() {
-    timeTimelogs.clear();
+    dayTimelogs.clear();
     final list = db.timelogSelectAll();
     for (final tc in list) {
       final t = tc.timelog!;
-      if (timeTimelogs.containsKey(t.startTime)) {
-        timeTimelogs[t.startTime]!.add(t);
+      if (dayTimelogs.containsKey(t.startTime)) {
+        dayTimelogs[t.startTime]!.add(t);
       } else {
-        timeTimelogs[t.startTime!] = List<Timelog>.empty(growable: true);
-        timeTimelogs[t.startTime]!.add(t);
+        dayTimelogs[t.startTime!] = List<Timelog>.empty(growable: true);
+        dayTimelogs[t.startTime]!.add(t);
       }
     }
+    dayCategoryDuration =
+        group_by.groupTimelogCategoriesByDayAndSumDurations(list);
     notifyListeners();
   }
 
@@ -50,18 +58,18 @@ class Globalz with ChangeNotifier {
   }
 
   int getTimeTimelogsLength() {
-    if (timeTimelogs[calUtils.selectedDay!] == null) {
+    if (dayTimelogs[calUtils.selectedDay!] == null) {
       return 0;
     } else {
-      return timeTimelogs[calUtils.selectedDay!]!.length;
+      return dayTimelogs[calUtils.selectedDay!]!.length;
     }
   }
 
   String getTimeTimelogNote(int index) {
-    if (timeTimelogs[calUtils.selectedDay!] == null) {
+    if (dayTimelogs[calUtils.selectedDay!] == null) {
       return '';
     }
-    final t = timeTimelogs[calUtils.selectedDay!]!.elementAt(index);
+    final t = dayTimelogs[calUtils.selectedDay!]!.elementAt(index);
     final startTimeStr =
         t.startTime == null ? '' : _formatDateTimeToTimeString(t.startTime!);
     final endTimeStr =
@@ -72,7 +80,7 @@ class Globalz with ChangeNotifier {
   }
 
   Timelog getTimelog(int index) {
-    return timeTimelogs[calUtils.selectedDay!]!.elementAt(index);
+    return dayTimelogs[calUtils.selectedDay!]!.elementAt(index);
   }
 }
 
