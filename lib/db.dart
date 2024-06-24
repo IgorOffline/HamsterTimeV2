@@ -30,7 +30,9 @@ List<Category> categorySelectAll() {
   return categories;
 }
 
-List<Map<String, dynamic>> timelogSelectAll() {
+List<TimelogWithCategories> timelogSelectAll() {
+  final timelogs = List<TimelogWithCategories>.empty(growable: true);
+
   debugPrint('Using sqlite3 ${sql.sqlite3.version}');
   final db = sql.sqlite3.open(_url());
 
@@ -51,8 +53,6 @@ List<Map<String, dynamic>> timelogSelectAll() {
   left join category s on t.subcategory_id == s.id_category;
   """);
 
-  final timelogs = List<Map<String, dynamic>>.empty(growable: true);
-
   for (final sql.Row row in resultSet) {
     final t = Timelog();
     t.id = row['id'];
@@ -64,15 +64,16 @@ List<Map<String, dynamic>> timelogSelectAll() {
     t.ctime = formatStringToDateTime(row['ctime']);
     t.mtime = formatStringToDateTime(row['mtime']);
     final c = Category();
+    c.id = t.category;
     c.name = row['category_name'];
     final s = Category();
+    s.id = t.subcategory;
     s.name = row['subcategory_name'];
 
-    timelogs.add({
-      'timelog': t,
-      'category': c,
-      'subcategory': s,
-    });
+    timelogs.add(TimelogWithCategories()
+      ..timelog = t
+      ..category = c
+      ..subcategory = s);
   }
 
   return timelogs;

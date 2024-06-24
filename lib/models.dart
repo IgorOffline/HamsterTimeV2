@@ -17,8 +17,8 @@ class Globalz with ChangeNotifier {
   void initGlobal() {
     timeTimelogs.clear();
     final list = db.timelogSelectAll();
-    for (final map in list) {
-      final t = map['timelog'] as Timelog;
+    for (final tc in list) {
+      final t = tc.timelog!;
       if (timeTimelogs.containsKey(t.startTime)) {
         timeTimelogs[t.startTime]!.add(t);
       } else {
@@ -82,6 +82,13 @@ class Category {
 
   @override
   String toString() => 'Category= [id=$id, name=$name]';
+
+  @override
+  operator ==(other) =>
+      other is Category && other.id == id && other.name == name;
+
+  @override
+  int get hashCode => Object.hash(id, name);
 }
 
 class Timelog {
@@ -111,6 +118,25 @@ class CalUtils {
   final today = DateTime.now();
   DateTime? firstDay;
   DateTime? lastDay;
+}
+
+class TimelogWithCategories {
+  Timelog? timelog;
+  Category? category;
+  Category? subcategory;
+
+  @override
+  String toString() =>
+      'TimelogWithCategories= [timelog=$timelog, category=$category, subcategory=$subcategory]';
+}
+
+class CategoryDuration {
+  Category? category;
+  Duration? duration;
+
+  @override
+  String toString() =>
+      'CategoryDuration= [category=$category, duration=$duration]';
 }
 
 String _formatDateTimeToDateString(DateTime dt) {
