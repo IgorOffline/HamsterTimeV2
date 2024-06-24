@@ -1,11 +1,19 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:hamster_time_v2/models.dart';
+import '../colors.dart' as colorz;
 
-class GraphWidget extends StatelessWidget {
+class GraphWidget extends StatefulWidget {
   const GraphWidget({super.key, required this.global});
 
   final Globalz global;
+
+  @override
+  State<StatefulWidget> createState() => _GraphWidgetState();
+}
+
+class _GraphWidgetState extends State<GraphWidget> {
+  var titlesMap = <int, String>{};
 
   @override
   Widget build(BuildContext context) {
@@ -13,14 +21,21 @@ class GraphWidget extends StatelessWidget {
   }
 
   BarChartData _data() {
-    final list = List<BarChartGroupData>.empty(growable: true);
-    if (global.dayCategoryDuration.containsKey(global.calUtils.selectedDay)) {
-      final map = global.dayCategoryDuration[global.calUtils.selectedDay!]!;
+    final barGroupsList = List<BarChartGroupData>.empty(growable: true);
+    if (widget.global.dayCategoryDuration
+        .containsKey(widget.global.calUtils.selectedDay)) {
+      final map = widget
+          .global.dayCategoryDuration[widget.global.calUtils.selectedDay!]!;
+      var index = 0;
       map.forEach((k, v) {
-        list.add(_makeGroupData(0, v.inMinutes.toDouble()));
+        barGroupsList.add(
+            _makeGroupData(index, v.inMinutes > 0 ? v.inMinutes / 60.0 : 0));
+        titlesMap[index] = k.name!;
+        index++;
       });
     }
-    return BarChartData(barGroups: list);
+    return BarChartData(
+        barGroups: barGroupsList, titlesData: _makeTitlesData());
   }
 
   BarChartGroupData _makeGroupData(
@@ -41,11 +56,37 @@ class GraphWidget extends StatelessWidget {
               : const BorderSide(color: Colors.white, width: 0),
           backDrawRodData: BackgroundBarChartRodData(
             show: true,
-            toY: 24 * 60,
+            toY: 24,
           ),
         ),
       ],
       showingTooltipIndicators: showTooltips,
+    );
+  }
+
+  FlTitlesData _makeTitlesData() {
+    return FlTitlesData(
+      bottomTitles: AxisTitles(
+        sideTitles: SideTitles(
+          showTitles: true,
+          getTitlesWidget: _getTitles,
+          reservedSize: 38,
+        ),
+      ),
+    );
+  }
+
+  Widget _getTitles(double value, TitleMeta meta) {
+    const style = TextStyle(
+      color: colorz.kPrimaryText,
+      fontWeight: FontWeight.bold,
+      fontSize: 14,
+    );
+    Widget text = Text(titlesMap[value.toInt()] ?? '', style: style);
+    return SideTitleWidget(
+      axisSide: meta.axisSide,
+      space: 16,
+      child: text,
     );
   }
 }
