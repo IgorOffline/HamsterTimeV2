@@ -2,13 +2,13 @@ import 'package:flutter/material.dart' show debugPrint;
 import 'models.dart';
 import 'package:sqlite3/sqlite3.dart' as sql;
 
-String _dbUrl() {
+String _url() {
   return 'C:\\C3\\dev\\flutter\\sqlite\\hamstertimev2.sqlite3';
 }
 
-List<Category> dbCategorySelectAll() {
+List<Category> categorySelectAll() {
   debugPrint('Using sqlite3 ${sql.sqlite3.version}');
-  final db = sql.sqlite3.open(_dbUrl());
+  final db = sql.sqlite3.open(_url());
 
   final sql.ResultSet resultSet =
       db.select('select c.id_category id, c.name from category c');
@@ -30,9 +30,9 @@ List<Category> dbCategorySelectAll() {
   return categories;
 }
 
-List<Map<String, dynamic>> dbTimelogSelectAll() {
+List<Map<String, dynamic>> timelogSelectAll() {
   debugPrint('Using sqlite3 ${sql.sqlite3.version}');
-  final db = sql.sqlite3.open(_dbUrl());
+  final db = sql.sqlite3.open(_url());
 
   final sql.ResultSet resultSet = db.select("""
   select 
@@ -78,13 +78,13 @@ List<Map<String, dynamic>> dbTimelogSelectAll() {
   return timelogs;
 }
 
-bool dbTimelogInsert(Timelog timelog) {
+bool timelogInsert(Timelog timelog) {
   final now = DateTime.now();
   timelog.ctime = now;
   timelog.mtime = now;
 
   debugPrint('Using sqlite3 ${sql.sqlite3.version}');
-  final db = sql.sqlite3.open(_dbUrl());
+  final db = sql.sqlite3.open(_url());
 
   final stmt = db.prepare(
       'insert into timelog (note, start_time, end_time, category_id, subcategory_id, ctime, mtime) values (?, ?, ?, ?, ?, ?, ?)');
@@ -103,12 +103,12 @@ bool dbTimelogInsert(Timelog timelog) {
   return true;
 }
 
-bool dbTimelogUpdate(Timelog timelog) {
+bool timelogUpdate(Timelog timelog) {
   final now = DateTime.now();
   timelog.mtime = now;
 
   debugPrint('Using sqlite3 ${sql.sqlite3.version}');
-  final db = sql.sqlite3.open(_dbUrl());
+  final db = sql.sqlite3.open(_url());
 
   final stmt = db.prepare(
       'update timelog SET note=?, category_id=?, subcategory_id=?, start_time=?, end_time=?, mtime=? where id_timelog=?');

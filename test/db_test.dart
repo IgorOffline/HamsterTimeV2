@@ -10,7 +10,7 @@ void main() {
 
 void test1() {
   testWidgets('More than 3 categories', (WidgetTester tester) async {
-    final categories = dbCategorySelectAll();
+    final categories = categorySelectAll();
     expect(categories.length > 3, true);
   });
 }
@@ -21,14 +21,14 @@ void test2() {
     timelog.note = '<TEST>';
     timelog.startTime = DateTime.now();
     timelog.category = 1;
-    final insert = dbTimelogInsert(timelog);
+    final insert = timelogInsert(timelog);
     expect(insert, true);
   });
 }
 
 void test3() {
   testWidgets('Timelog select all', (WidgetTester tester) async {
-    final timelogs = dbTimelogSelectAll();
+    final timelogs = timelogSelectAll();
     expect(timelogs.isNotEmpty, true);
   });
 }

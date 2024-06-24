@@ -43,8 +43,7 @@ class _HomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      var global = context.read<Globalz>();
-      global.initGlobal();
+      _initGlobal();
     });
   }
 
@@ -77,39 +76,8 @@ class _HomePageState extends State<MyHomePage> {
                           border:
                               Border(bottom: BorderSide(), left: BorderSide())),
                       child: provider.Consumer<Globalz>(
-                          builder: (context, global, child) => ListView.builder(
-                              itemCount: global.getTimeTimelogsLength(),
-                              prototypeItem:
-                                  const ListTile(title: Text('Prototype')),
-                              itemBuilder: (context, index) {
-                                return ListTile(
-                                    title: Row(
-                                  children: [
-                                    Flexible(
-                                        child: Text(
-                                      global.getTimeTimelogNote(index),
-                                      overflow: TextOverflow.ellipsis,
-                                      maxLines: 2,
-                                    )),
-                                    TextButton(
-                                      child: const Icon(Icons.edit),
-                                      onPressed: () async {
-                                        Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                                builder: (context) =>
-                                                    TimelogRoute(
-                                                        selectedDay: global
-                                                            .calUtils
-                                                            .selectedDay!,
-                                                        timelog:
-                                                            global.getTimelog(
-                                                                index))));
-                                      },
-                                    )
-                                  ],
-                                ));
-                              }))),
+                          builder: (context, global, child) =>
+                              _listView(global))),
                 ),
               ),
             ]),
@@ -122,12 +90,15 @@ class _HomePageState extends State<MyHomePage> {
                       builder: (context, global, child) => TextButton(
                             onPressed: () async {
                               Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) => TimelogRoute(
-                                          selectedDay:
-                                              global.calUtils.selectedDay!,
-                                          timelog: Timelog())));
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) => TimelogRoute(
+                                              selectedDay:
+                                                  global.calUtils.selectedDay!,
+                                              timelog: Timelog())))
+                                  .whenComplete(() {
+                                _initGlobal();
+                              });
                             },
                             child: Text(
                               'New Timelog (${global.value})',
@@ -146,6 +117,45 @@ class _HomePageState extends State<MyHomePage> {
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  ListView _listView(Globalz global) {
+    return ListView.builder(
+        itemCount: global.getTimeTimelogsLength(),
+        prototypeItem: const ListTile(title: Text('Prototype')),
+        itemBuilder: (context, index) {
+          return ListTile(
+              title: Row(
+            children: [
+              Flexible(
+                  child: Text(
+                global.getTimeTimelogNote(index),
+                overflow: TextOverflow.ellipsis,
+                maxLines: 2,
+              )),
+              TextButton(
+                child: const Icon(Icons.edit),
+                onPressed: () async {
+                  Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => TimelogRoute(
+                                  selectedDay: global.calUtils.selectedDay!,
+                                  timelog: global.getTimelog(index))))
+                      .whenComplete(() {
+                    _initGlobal();
+                  });
+                },
+              )
+            ],
+          ));
+        });
+  }
+
+  void _initGlobal() {
+    debugPrint('_initGlobal()');
+    var global = context.read<Globalz>();
+    global.initGlobal();
   }
 }
 

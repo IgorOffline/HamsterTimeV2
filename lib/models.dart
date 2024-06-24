@@ -2,7 +2,7 @@ import 'dart:collection';
 import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart' as cal;
 import 'package:intl/intl.dart' as intl;
-import 'db.dart';
+import 'db.dart' as db;
 
 class Globalz with ChangeNotifier {
   int value = 0;
@@ -16,7 +16,7 @@ class Globalz with ChangeNotifier {
 
   void initGlobal() {
     timeTimelogs.clear();
-    final list = dbTimelogSelectAll();
+    final list = db.timelogSelectAll();
     for (final map in list) {
       final t = map['timelog'] as Timelog;
       if (timeTimelogs.containsKey(t.startTime)) {

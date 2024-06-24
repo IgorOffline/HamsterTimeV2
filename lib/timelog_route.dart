@@ -1,7 +1,7 @@
 import 'package:collection/collection.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart' as provider;
-import 'db.dart';
+import 'db.dart' as db;
 import 'models.dart';
 import 'colors.dart' as colorz;
 
@@ -17,7 +17,7 @@ class TimelogRoute extends StatefulWidget {
 }
 
 class _TimelogRouteState extends State<TimelogRoute> {
-  final categories = dbCategorySelectAll();
+  final categories = db.categorySelectAll();
   final startTimeController = TextEditingController();
   final endTimeController = TextEditingController();
   final noteController = TextEditingController();
@@ -74,69 +74,71 @@ class _TimelogRouteState extends State<TimelogRoute> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Column(
-              children: [
-                TextFormField(
-                    controller: startTimeController,
-                    decoration: const InputDecoration(
-                        border: UnderlineInputBorder(),
-                        labelText: 'Start time')),
-                TextFormField(
-                    controller: endTimeController,
-                    decoration: const InputDecoration(
-                        border: UnderlineInputBorder(), labelText: 'End time')),
-                TextFormField(
-                    controller: noteController,
-                    decoration: const InputDecoration(
-                        border: UnderlineInputBorder(), labelText: 'Note')),
-                DropdownMenu(
-                    controller: categoryController,
-                    label: const Text('Category'),
-                    dropdownMenuEntries: categories
-                        .map<DropdownMenuEntry<Category>>((Category c) {
-                      return DropdownMenuEntry<Category>(
-                          value: c, label: c.name!);
-                    }).toList(),
-                    onSelected: (Category? c) => categoryId = c?.id),
-                DropdownMenu(
-                    controller: subcategoryController,
-                    label: const Text('Subcategory'),
-                    dropdownMenuEntries: categories
-                        .map<DropdownMenuEntry<Category>>((Category c) {
-                      return DropdownMenuEntry<Category>(
-                          value: c, label: c.name!);
-                    }).toList(),
-                    onSelected: (Category? c) => subcategoryId = c?.id),
-                TextButton(
-                    onPressed: () {
-                      var timelog = Timelog();
-                      timelog.startTime =
-                          formatStringToDateTime(startTimeController.text);
-                      timelog.endTime =
-                          formatStringToDateTime(endTimeController.text);
-                      timelog.note = noteController.text;
-                      timelog.category = categoryId;
-                      timelog.subcategory = subcategoryId;
-                      debugPrint('$timelog');
-                      if (widget.timelog.id == null) {
-                        dbTimelogInsert(timelog);
-                      } else {
-                        timelog.id = widget.timelog.id;
-                        dbTimelogUpdate(timelog);
-                      }
-                      var global = context.read<Globalz>();
-                      global.initGlobal();
-                      Navigator.pop(context);
-                    },
-                    child: const Text('SAVE')),
-                const Text('You have pushed the button this many times:'),
-                provider.Consumer<Globalz>(
-                  builder: (context, global, child) => Text(
-                    '${global.value}',
-                    style: Theme.of(context).textTheme.headlineMedium,
-                  ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextFormField(
+                  controller: startTimeController,
+                  decoration: const InputDecoration(
+                      border: UnderlineInputBorder(), labelText: 'Start time')),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextFormField(
+                  controller: endTimeController,
+                  decoration: const InputDecoration(
+                      border: UnderlineInputBorder(), labelText: 'End time')),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextFormField(
+                  controller: noteController,
+                  decoration: const InputDecoration(
+                      border: UnderlineInputBorder(), labelText: 'Note')),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: DropdownMenu(
+                  controller: categoryController,
+                  label: const Text('Category'),
+                  dropdownMenuEntries:
+                      categories.map<DropdownMenuEntry<Category>>((Category c) {
+                    return DropdownMenuEntry<Category>(
+                        value: c, label: c.name!);
+                  }).toList(),
+                  onSelected: (Category? c) => categoryId = c?.id),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: DropdownMenu(
+                  controller: subcategoryController,
+                  label: const Text('Subcategory'),
+                  dropdownMenuEntries:
+                      categories.map<DropdownMenuEntry<Category>>((Category c) {
+                    return DropdownMenuEntry<Category>(
+                        value: c, label: c.name!);
+                  }).toList(),
+                  onSelected: (Category? c) => subcategoryId = c?.id),
+            ),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text('You have pushed the button this many times:'),
+            ),
+            provider.Consumer<Globalz>(
+              builder: (context, global, child) => Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Text(
+                  '${global.value}',
+                  style: Theme.of(context).textTheme.headlineMedium,
                 ),
-              ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: TextButton(
+                  onPressed: () {
+                    _saveOnPressed();
+                  },
+                  child: const Text('SAVE')),
             )
           ],
         ),
@@ -150,5 +152,24 @@ class _TimelogRouteState extends State<TimelogRoute> {
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  void _saveOnPressed() {
+    var timelog = Timelog();
+    timelog.startTime = formatStringToDateTime(startTimeController.text);
+    timelog.endTime = formatStringToDateTime(endTimeController.text);
+    timelog.note = noteController.text;
+    timelog.category = categoryId;
+    timelog.subcategory = subcategoryId;
+    debugPrint('$timelog');
+    if (widget.timelog.id == null) {
+      db.timelogInsert(timelog);
+    } else {
+      timelog.id = widget.timelog.id;
+      db.timelogUpdate(timelog);
+    }
+    var global = context.read<Globalz>();
+    global.initGlobal();
+    Navigator.pop(context);
   }
 }
