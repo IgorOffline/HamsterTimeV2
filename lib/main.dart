@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hamster_time_v2/graph_route.dart';
 import 'package:hamster_time_v2/timelog_route.dart';
 import 'package:provider/provider.dart' as provider;
 import 'package:table_calendar/table_calendar.dart' as cal;
@@ -84,26 +85,47 @@ class _HomePageState extends State<MyHomePage> {
             const Spacer(),
             Padding(
               padding: const EdgeInsets.only(bottom: 8.0),
-              child: Container(
-                  color: Theme.of(context).colorScheme.inversePrimary,
-                  child: provider.Consumer<Globalz>(
-                      builder: (context, global, child) => TextButton(
-                            onPressed: () async {
-                              Navigator.push(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Container(
+                      color: Theme.of(context).colorScheme.inversePrimary,
+                      child: provider.Consumer<Globalz>(
+                          builder: (context, global, child) => TextButton(
+                                onPressed: () async {
+                                  Navigator.push(
                                       context,
                                       MaterialPageRoute(
                                           builder: (context) => TimelogRoute(
                                               selectedDay:
                                                   global.calUtils.selectedDay!,
-                                              timelog: Timelog())))
-                                  .whenComplete(() {
-                                _initGlobal();
-                              });
-                            },
-                            child: Text(
-                              'New Timelog (${global.value})',
-                            ),
-                          ))),
+                                              timelog:
+                                                  Timelog()))).whenComplete(() {
+                                    _initGlobal();
+                                  });
+                                },
+                                child: Text(
+                                  'New Timelog (${global.value})',
+                                ),
+                              ))),
+                  Container(
+                      color: Theme.of(context).colorScheme.inversePrimary,
+                      child: provider.Consumer<Globalz>(
+                          builder: (context, global, child) => TextButton(
+                                onPressed: () async {
+                                  Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                              builder: (context) =>
+                                                  const GraphRoute()))
+                                      .whenComplete(() {
+                                    _initGlobal();
+                                  });
+                                },
+                                child: const Text('View Graph'),
+                              ))),
+                ],
+              ),
             ),
           ],
         ),
